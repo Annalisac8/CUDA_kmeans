@@ -90,6 +90,18 @@
     <ClCompile Include="Punto.cpp" />
     <ClCompile Include="sequential_kmeans.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="ds\100000x10.txt" />
+    <Text Include="ds\100000x100.txt" />
+    <Text Include="ds\100000x1000.txt" />
+    <Text Include="ds\10000x10.txt" />
+    <Text Include="ds\10000x100.txt" />
+    <Text Include="ds\10000x1000.txt" />
+    <Text Include="ds\1000x10.txt" />
+    <Text Include="ds\1000x100.txt" />
+    <Text Include="ds\1000x1000.txt" />
+    <Text Include="ds\ds.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />

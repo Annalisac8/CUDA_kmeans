@@ -38,8 +38,9 @@ void aggiornamentoCentroidi(std::vector<Punto>& ds, std::vector<Punto>& centroid
 }
 
 // Funzione per assegnare ciascun punto del dataset al cluster più vicino basato sui centroidi
-void assegnamento(std::vector<Punto>& ds, std::vector<Punto>& centroidi, int k, const unsigned long numPunti, const unsigned long dimPunti, int etichetta_cluster, double distanza, double minDistanza) {
-
+void assegnamento(std::vector<Punto>& ds, std::vector<Punto>& centroidi, int k, const unsigned long numPunti, const unsigned long dimPunti, int etichetta_cluster) {
+    double distanza = std::numeric_limits<double>::max();
+    double minDistanza;
     // Itero su ogni punto nel dataset (ds) per assegnarlo al cluster più vicino
     for (int i = 0; i < numPunti; i++) {
         // Inizializzo minDistanza al massimo valore possibile per un double
@@ -103,14 +104,14 @@ std::tuple<std::vector<Punto>, std::vector<Punto>> sequential_kmeans(std::vector
     // Dimensione di ciascun punto (numero di dimensioni)
     const auto dimPunti = ds[0].dimensioni.size();
 
-    int etichetta_cluster; // Variabile per memorizzare l'etichetta del cluster assegnato
-    double distanza, minDistanza; // Variabili per le distanze tra punti e centroidi
+    int etichetta_cluster=-1; // Variabile per memorizzare l'etichetta del cluster assegnato
+    //double distanza, minDistanza; // Variabili per le distanze tra punti e centroidi
     std::vector<int> count(k); // Vettore per contare il numero di punti assegnati a ciascun cluster
 
     // Ciclo principale dell'algoritmo K-Means, continua finché non si raggiunge la convergenza
     while (!convergenza) {
         // Trova il centroide più vicino per ogni punto e assegna i punti ai cluster
-        assegnamento(ds, centroidi, k, numPunti, dimPunti, etichetta_cluster, distanza, minDistanza);
+        assegnamento(ds, centroidi, k, numPunti, dimPunti, etichetta_cluster);
 
         // Aggiorna le posizioni dei centroidi basandosi sui punti assegnati
         // Inizializza prima i centroidi a zero e poi calcola le nuove posizioni

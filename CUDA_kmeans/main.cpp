@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     std::cin >> filename;
 
     // Costruisci il percorso completo del dataset
-    std::string ds_path = "../ds/" + filename;
+    std::string ds_path = "ds/" + filename;
 
     // Apri il file del dataset
     std::ifstream dataset_file(ds_path);
