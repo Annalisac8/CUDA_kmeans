@@ -82,6 +82,7 @@
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="kernel.cuh" />
     <ClInclude Include="Punto.h" />
     <ClInclude Include="sequential_kmeans.h" />
   </ItemGroup>

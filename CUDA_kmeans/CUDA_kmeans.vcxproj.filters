@@ -11,6 +11,7 @@
   <ItemGroup>
     <ClInclude Include="Punto.h" />
     <ClInclude Include="sequential_kmeans.h" />
+    <ClInclude Include="kernel.cuh" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ds">
