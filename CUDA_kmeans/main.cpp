@@ -22,8 +22,13 @@
 #include <iostream>
 
 
+#include <stdio.h>
 
-int main(int argc, char* argv[]) {
+
+
+int test(int argc, char* argv[]) {
+
+   
 
     std::string riga;
     double valore;
@@ -54,15 +59,6 @@ int main(int argc, char* argv[]) {
         std::exit(EXIT_FAILURE);
     }
 
-    /*
-    std::string ds_path = "../ds/1000x10";
-    std::ifstream dataset_file(ds_path);
-    if (!dataset_file) {
-        //std::cerr << "Could not open file: " << argv[1] << std::endl;
-        std::cerr << "Could not open file: " << ds_path << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-     */
 
 
     if (dataset_file.is_open()) {
@@ -118,18 +114,6 @@ int main(int argc, char* argv[]) {
     std::vector<Punto> output_centroidi;
     std::vector<Punto> output_ds;
 
-
-    /*
-        //PRINT INITIAL CENTROIDS
-        //Print centroids
-        std::cout << "PRINT INITIAL CENTROIDS after then dataset is load \n";
-        for (int i=0; i < k; i++){
-            for(int j=0; j < dimPoint; j++){
-                std::cout << centroids[i].dimensions[j] << " ";
-            }
-            std::cout << std::endl;
-        }
-    */
 
     //SEQUENTIAL Kmeans
 
