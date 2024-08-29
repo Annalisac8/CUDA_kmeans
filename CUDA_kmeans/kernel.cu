@@ -23,6 +23,7 @@
 #include "Punto.h"
 
 
+
 __global__ void testAtomicCAS(double* address) {
     unsigned long long int* address_as_ull = reinterpret_cast<unsigned long long int*>(address);
     unsigned long long int old_value = *address_as_ull;
@@ -120,6 +121,8 @@ bool controllaAssegnazioneUguale(const short* vecchiaAssegnazioneHost, const sho
     return true;
 }
 
+
+
 __global__
 void calcola_distanze(const double* datasetDispositivo, const double* centroidiDispositivo, double* distanzeDispositivo) {
     double distanza = 0;
@@ -151,6 +154,7 @@ void assegnazione_punti(const double* distanzeDispositivo, short* assegnazioneDi
     }
 }
 
+
 __global__
 void inizializza_centroidi(double* centroidiDispositivo) {
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -172,6 +176,8 @@ void calcola_somma(const double* datasetDispositivo, double* centroidiDispositiv
     }
 }
 
+
+
 //Calcolo della somma con griglia 1D e iterazione sulle dimensioni del punto
 __global__
 void calcola_somma2(const double* datasetDispositivo, double* centroidiDispositivo, const short* assegnazioneDispositivo, int* contatoreDispositivo) {
@@ -185,6 +191,7 @@ void calcola_somma2(const double* datasetDispositivo, double* centroidiDispositi
     }
 }
 
+
 //Aggiornamento centroidi con griglia 2D (meglio con dataset con molte dimensioni)
 __global__
 void aggiorna_centroidi(double* centroidiDispositivo, const int* contatoreDispositivo) {
@@ -194,6 +201,7 @@ void aggiorna_centroidi(double* centroidiDispositivo, const int* contatoreDispos
         centroidiDispositivo[riga * costanteDimPunto + col] = centroidiDispositivo[riga * costanteDimPunto + col] / (double(contatoreDispositivo[riga]) / costanteDimPunto);
     }
 }
+
 
 //Aggiornamento centroidi con griglia 1D (non c'è bisogno di dividere il contatore per le dimensioni del punto)
 __global__
@@ -205,10 +213,16 @@ void aggiorna_centroidi2(double* centroidiDispositivo, const int* contatoreDispo
     }
 }
 
+
+
+
+
+
 struct KMeansResult {
     double* centroidiDispositivo;
     short* assegnazioneHost;
 };
+
 
 __host__ 
 std::tuple<double*, short*> cuda_KMeans(double* datasetDispositivo, double* centroidiDispositivo, const int numPunti, const short k, const short dimPunto) {
@@ -246,25 +260,25 @@ std::tuple<double*, short*> cuda_KMeans(double* datasetDispositivo, double* cent
     while (!convergenza) {
         //ASSEGNAZIONE
         //Trova il centroide più vicino e assegna il punto a quel cluster
-        calcola_distanze << <dimGrigliaDistanza, dimBloccoDistanza >> > (datasetDispositivo, centroidiDispositivo, distanzeDispositivo);
+        calcola_distanze <<<dimGrigliaDistanza, dimBloccoDistanza >>> (datasetDispositivo, centroidiDispositivo, distanzeDispositivo);
         cudaDeviceSynchronize();
-        assegnazione_punti << <ceil(numPunti / 1024.0), 1024 >> > (distanzeDispositivo, assegnazioneDispositivo);
+        assegnazione_punti <<<ceil(numPunti / 1024.0), 1024 >>> (distanzeDispositivo, assegnazioneDispositivo);
         cudaDeviceSynchronize();
 
         //AGGIORNAMENTO CENTROIDI
         //Inizializza i centroidi a 0 e imposta il contatore a 0 (per calcolare le medie)
-        inizializza_centroidi << <dimGrigliaInizializza, dimBloccoInizializza >> > (centroidiDispositivo);
+        inizializza_centroidi <<<dimGrigliaInizializza, dimBloccoInizializza >>> (centroidiDispositivo);
 
         CUDA_CHECK_RETURN(cudaMemset(contatoreDispositivo, 0, k * sizeof(int)));
         cudaDeviceSynchronize();
 
         //Calcola tutte le somme per i centroidi
-        calcola_somma << <dimGrigliaCalcolaSomma, dimBloccoCalcolaSomma >> > (datasetDispositivo, centroidiDispositivo, assegnazioneDispositivo, contatoreDispositivo);
+        calcola_somma <<<dimGrigliaCalcolaSomma, dimBloccoCalcolaSomma >>> (datasetDispositivo, centroidiDispositivo, assegnazioneDispositivo, contatoreDispositivo);
 
         cudaDeviceSynchronize();
 
         //Calcola la media: divisione per il contatore
-        aggiorna_centroidi << <dimGrigliaAggiornaCentroidi, dimBloccoAggiornaCentroidi >> > (centroidiDispositivo, contatoreDispositivo);
+        aggiorna_centroidi <<<dimGrigliaAggiornaCentroidi, dimBloccoAggiornaCentroidi >>> (centroidiDispositivo, contatoreDispositivo);
 
         cudaDeviceSynchronize();
 
@@ -283,7 +297,14 @@ std::tuple<double*, short*> cuda_KMeans(double* datasetDispositivo, double* cent
 
 
 
-int main() {
+
+ 
+
+
+
+
+int test() {
+
 
     std::string riga;
     double valore;
@@ -477,3 +498,5 @@ int main() {
 
     return 0;
 }
+
+
