@@ -1,7 +1,18 @@
+#pragma once
+
 #include <cuda_runtime.h>
-#include <device_launch_parameters.h>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
 
-#define CUDA_CHECK_RETURN(valore) ControllaErroreCudaAux(__FILE__, __LINE__, #valore, valore)
-void ControllaErroreCudaAux(const char* file, unsigned line, const char* statement, cudaError_t err);
+// Macro per il controllo degli errori CUDA
+#define CUDA_CHECK(err) { gpuAssert((err), __FILE__, __LINE__); }
 
-std::tuple<double*, short*> cuda_KMeans(double* datasetDispositivo, double* centroidiDispositivo, const int numeroPunti, const short k, const short dimensionePunti);
+inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true) {
+    if (code != cudaSuccess) {
+        fprintf(stderr, "CUDA Error: %s %s %d\n", cudaGetErrorString(code), file, line);
+        if (abort) exit(code);
+    }
+}
+
+void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int numPoints, int numCentroids, int dimensions, int maxIterations, float tolerance, std::vector<float>& h_oldCentroids, std::vector<float>& h_currentCentroids);
