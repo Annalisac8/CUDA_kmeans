@@ -91,19 +91,38 @@ void stampaPunti(const std::vector<Punto>& ds) {
 
 int main(int argc, char* argv[]) {
 
-    std::vector<std::string> filenames = { "ds.txt",
-        //"a1.txt",
+    std::vector<std::string> filenames = { 
+        //"s1set.txt",
+        //"birch1.txt",
+        "test.txt",
+        //"ds.txt",
+
         /*
+        "a1.txt",
+        "a2.txt",
+        "a3.txt",
+        "letter.txt",
+        
+        
+        
+        
+        
         "1000x10.txt",
         "1000x100.txt",
-        "1000x1000.txt",
+        */
+        //"1000x1000.txt",
+
+        /*
         "10000x10.txt",
         "10000x100.txt",
-        "10000x1000.txt",
-        "100000x10.txt",
-        "100000x100.txt",
-        "100000x1000.txt",
-        */ };
+
+        */
+        //"10000x1000.txt",
+        //"100000x10.txt",
+        //"100000x100.txt",
+        //"100000x1000.txt",
+        
+         };
     const int numEsecuzioni = 1;
 
     std::vector<std::tuple<std::string, double, double>> risultati;
@@ -134,6 +153,7 @@ int main(int argc, char* argv[]) {
         int dimensions = dataset[0].dimensioni.size();
         int numCentroids = 10;
 
+        if (filename == "test.txt") { numCentroids = 3; }
         if (filename == "ds.txt") { numCentroids = 3; }
         if (filename == "s1set.txt") { numCentroids = 15; }
         if (filename == "a1.txt") { numCentroids = 20; }
@@ -152,10 +172,11 @@ int main(int argc, char* argv[]) {
         //std::shuffle(indices.begin(), indices.end(), rng);
         for (int i = 0; i < numCentroids; i++) {
             initialCentroids[i] = dataset[indices[i]];
+            initialCentroids[i].cluster_id = i;
         }
-        initialCentroids[0] = Punto(8.5, 7.5, 9.5);
-        initialCentroids[1] = Punto(2.5, 3.0, 4.5);
-        initialCentroids[2] = Punto(9.0, 2.5, 3.5);
+        //initialCentroids[0] = Punto(8.5, 7.5, 9.5);
+        //initialCentroids[1] = Punto(2.5, 3.0, 4.5);
+        //initialCentroids[2] = Punto(9.0, 2.5, 3.5);
 
 
         //std::cout << "Centroidi iniziali: ";
@@ -201,7 +222,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             // Verifica la dimensione di h_centroids
-            //std::cout << "Dimensioni h_centroids: " << h_centroids.size()
+            //std::cout << "Dimensioni h_centroids: " << h_centroids.size();
             //    << ", atteso: " << (numCentroids * dimensions) << "\n";
 
             float* d_points;
@@ -221,7 +242,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Inizio K-Means su GPU...\n";
 
             auto start = std::chrono::high_resolution_clock::now();
-            kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 100, 0.01, h_oldCentroids, h_currentCentroids);
+            kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 100000, 0.01, h_oldCentroids, h_currentCentroids);
 
             CUDA_CHECK(cudaDeviceSynchronize()); // Assicuriamoci che i kernel siano completati
             auto finish = std::chrono::high_resolution_clock::now();
@@ -246,6 +267,7 @@ int main(int argc, char* argv[]) {
             }
             */
 
+            
 
             std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
             for (int c = 0; c < numCentroids; c++) {
@@ -257,7 +279,7 @@ int main(int argc, char* argv[]) {
                 std::cout << ")\n";
             }
 
-
+            
 
 
             //std::cout << "Rilascio della memoria GPU nel main...\n";
@@ -293,7 +315,7 @@ int main(int argc, char* argv[]) {
             std::chrono::duration<double> elapsedCuda = finish - start;
             tempiPar[iter] = std::chrono::duration<double>(finish - start).count();
 
-            std::cout << "Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";
+            std::cout << filename <<"Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";
 
             /// Calcola la media dei tempi
             //double mediaSeq = std::accumulate(tempiSeq.begin(), tempiSeq.end(), 0.0) / numEsecuzioni;
