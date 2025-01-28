@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -72,7 +71,7 @@ void stampaTabella(const std::vector<std::tuple<std::string, double, double>>& r
 
     for (const auto& risultato : risultati) {
         std::cout << std::setw(20) << std::get<0>(risultato) // Nome del file
-           // << std::setw(20) << std::fixed << std::setprecision(6) << std::get<1>(risultato) // Tempo sequenziale
+            // << std::setw(20) << std::fixed << std::setprecision(6) << std::get<1>(risultato) // Tempo sequenziale
             << std::setw(20) << std::fixed << std::setprecision(6) << std::get<2>(risultato) // Tempo parallelo
             << std::endl;
     }
@@ -92,19 +91,19 @@ void stampaPunti(const std::vector<Punto>& ds) {
 
 int main(int argc, char* argv[]) {
 
-    std::vector<std::string> filenames = {  "ds.txt",
-                                            //"a1.txt",
-                                            /*
-                                            "1000x10.txt",
-                                            "1000x100.txt",
-                                            "1000x1000.txt",
-                                            "10000x10.txt",
-                                            "10000x100.txt",
-                                            "10000x1000.txt",
-                                            "100000x10.txt",
-                                            "100000x100.txt",
-                                            "100000x1000.txt",
-                                            */};
+    std::vector<std::string> filenames = { "ds.txt",
+        //"a1.txt",
+        /*
+        "1000x10.txt",
+        "1000x100.txt",
+        "1000x1000.txt",
+        "10000x10.txt",
+        "10000x100.txt",
+        "10000x1000.txt",
+        "100000x10.txt",
+        "100000x100.txt",
+        "100000x1000.txt",
+        */ };
     const int numEsecuzioni = 1;
 
     std::vector<std::tuple<std::string, double, double>> risultati;
@@ -246,9 +245,9 @@ int main(int argc, char* argv[]) {
                 std::cout << "\n";
             }
             */
-            
-            
-            std::cout << "\n--- Centroidi calcolati con CUDA ---\n";           
+
+
+            std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
             for (int c = 0; c < numCentroids; c++) {
                 std::cout << "Centroide " << c << ": (";
                 for (int d = 0; d < dimensions; d++) {
@@ -257,8 +256,8 @@ int main(int argc, char* argv[]) {
                 }
                 std::cout << ")\n";
             }
-            
-            
+
+
 
 
             //std::cout << "Rilascio della memoria GPU nel main...\n";

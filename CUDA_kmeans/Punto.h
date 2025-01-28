@@ -31,6 +31,12 @@ struct Punto {
         }
         std::cout << "]\n";
     }
+    Punto() {} // Costruttore predefinito
+    Punto(double x, double y, double z) {
+        dimensioni.push_back(x);
+        dimensioni.push_back(y);
+        dimensioni.push_back(z);
+    }
 };
 
 

@@ -73,7 +73,7 @@ __global__ void update_centroids(float* points, float* centroids, int* assignmen
 }
 
 void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int numPoints, int numCentroids, int dimensions, int maxIterations, float tolerance, std::vector<float>& h_oldCentroids, std::vector<float>& h_currentCentroids) {
-  
+
     if (d_points == nullptr || d_centroids == nullptr || d_assignments == nullptr) {
         //printf("Errore: Puntatori GPU non validi.\n");
         return;
@@ -95,7 +95,7 @@ void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int nu
 
     for (int iter = 0; iter < maxIterations; iter++) {
 
-        
+
         //printf("Inizio iterazione %d\n", iter);
 
         // Copia d_centroids in d_oldCentroids
@@ -119,11 +119,11 @@ void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int nu
 
         std::vector<float> h_currentCentroids(numCentroids * dimensions);
         CUDA_CHECK(cudaMemcpy(h_currentCentroids.data(), d_centroids, numCentroids * dimensions * sizeof(float), cudaMemcpyDeviceToHost));
-       // printf("Copia di d_centroids nella memoria host completata con successo.\n");
+        // printf("Copia di d_centroids nella memoria host completata con successo.\n");
 
-        
-        // Verifica della convergenza
-        //float maxChange = 0.0f;
+
+         // Verifica della convergenza
+         //float maxChange = 0.0f;
         bool converged = true;
 
         for (int i = 0; i < numCentroids * dimensions; i++) {
@@ -136,19 +136,19 @@ void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int nu
                 //if (change > maxChange) maxChange = change;
             }
         }
-        
+
         if (converged) {
             std::cout << "Convergenza raggiunta dopo " << iter << " iterazioni.\n";
             break; // Esci dal ciclo principale
         }
-       // printf("Massima variazione: %f\n", maxChange);
+        // printf("Massima variazione: %f\n", maxChange);
 
-        //if (maxChange < tolerance) {
-        //    printf("Convergenza Cuda raggiunta dopo %d iterazioni.\n", iter + 1);
-        //    break;
-        //}
+         //if (maxChange < tolerance) {
+         //    printf("Convergenza Cuda raggiunta dopo %d iterazioni.\n", iter + 1);
+         //    break;
+         //}
 
-        //printf("Iterazione %d completata senza errori.\n", iter);
+         //printf("Iterazione %d completata senza errori.\n", iter);
     }
 
     // Rilascio della memoria GPU
