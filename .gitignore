@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignora file grandi
+CUDA_kmeans/ds/100000x100.txt
+CUDA_kmeans/ds/100000x1000.txt
+CUDA_kmeans/ds/10000x1000.txt
