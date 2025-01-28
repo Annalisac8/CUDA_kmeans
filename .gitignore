@@ -366,3 +366,6 @@ FodyWeavers.xsd
 CUDA_kmeans/ds/100000x100.txt
 CUDA_kmeans/ds/100000x1000.txt
 CUDA_kmeans/ds/10000x1000.txt
+CUDA_kmeans/ds/letter.txt
+CUDA_kmeans/ds/birch1.txt
+CUDA_kmeans/ds/birch3.txt
