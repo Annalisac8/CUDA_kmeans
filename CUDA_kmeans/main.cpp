@@ -92,31 +92,34 @@ void stampaPunti(const std::vector<Punto>& ds) {
 int main(int argc, char* argv[]) {
 
     std::vector<std::string> filenames = { 
-        //"s1set.txt",
-        //"birch1.txt",
-        "test.txt",
-        //"ds.txt",
-
         /*
+        "test.txt",
+        "ds.txt",
+        */
+        
+        /*
+        "s1set.txt",
         "a1.txt",
         "a2.txt",
         "a3.txt",
-        "letter.txt",
-        
-        
-        
-        
-        
-        "1000x10.txt",
-        "1000x100.txt",
+        "letter.txt",     
+        "birch1.txt",
         */
+        
+        
+        
+        
+        
+        //"1000x10.txt",
+        "1000x100.txt",
+        
         //"1000x1000.txt",
 
-        /*
-        "10000x10.txt",
+        
+        //"10000x10.txt",
         "10000x100.txt",
 
-        */
+        
         //"10000x1000.txt",
         //"100000x10.txt",
         //"100000x100.txt",
@@ -174,9 +177,11 @@ int main(int argc, char* argv[]) {
             initialCentroids[i] = dataset[indices[i]];
             initialCentroids[i].cluster_id = i;
         }
-        //initialCentroids[0] = Punto(8.5, 7.5, 9.5);
-        //initialCentroids[1] = Punto(2.5, 3.0, 4.5);
-        //initialCentroids[2] = Punto(9.0, 2.5, 3.5);
+        if (filename == "ds.txt") {
+            initialCentroids[0] = Punto(1.0, 2.0, 3.0);
+            initialCentroids[1] = Punto(5.0, 6.0, 7.0);
+            initialCentroids[2] = Punto(9.0, 9.5, 9.0);
+        }
 
 
         //std::cout << "Centroidi iniziali: ";
@@ -207,8 +212,8 @@ int main(int argc, char* argv[]) {
 
             */
 
-            std::vector<float> h_points(numPoints * dimensions);
-            std::vector<float> h_centroids(numCentroids * dimensions);
+            std::vector<double> h_points(numPoints * dimensions);
+            std::vector<double> h_centroids(numCentroids * dimensions);
 
             for (int i = 0; i < numPoints; i++) {
                 for (int d = 0; d < dimensions; d++) {
@@ -225,34 +230,58 @@ int main(int argc, char* argv[]) {
             //std::cout << "Dimensioni h_centroids: " << h_centroids.size();
             //    << ", atteso: " << (numCentroids * dimensions) << "\n";
 
-            float* d_points;
-            float* d_centroids;
+            double* d_points;
+            double* d_centroids;
             int* d_assignments;
 
-            CUDA_CHECK(cudaMalloc(&d_points, numPoints * dimensions * sizeof(float)));
-            CUDA_CHECK(cudaMalloc(&d_centroids, numCentroids * dimensions * sizeof(float)));
+            std::vector<int> h_assignments(numPoints, 0);
+
+            CUDA_CHECK(cudaMalloc(&d_points, numPoints * dimensions * sizeof(double)));
+            CUDA_CHECK(cudaMalloc(&d_centroids, numCentroids * dimensions * sizeof(double)));
             CUDA_CHECK(cudaMalloc(&d_assignments, numPoints * sizeof(int)));
 
-            CUDA_CHECK(cudaMemcpy(d_points, h_points.data(), numPoints * dimensions * sizeof(float), cudaMemcpyHostToDevice));
-            CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), numCentroids * dimensions * sizeof(float), cudaMemcpyHostToDevice));
+            CUDA_CHECK(cudaMemcpy(d_points, h_points.data(), numPoints * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+            CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), numCentroids * dimensions * sizeof(double), cudaMemcpyHostToDevice));
 
-            std::vector<float> h_oldCentroids(numCentroids * dimensions);
-            std::vector<float> h_currentCentroids(numCentroids * dimensions);
+            std::vector<double> h_oldCentroids(numCentroids * dimensions);
+            std::vector<double> h_currentCentroids(numCentroids * dimensions);
 
             std::cout << "Inizio K-Means su GPU...\n";
 
             auto start = std::chrono::high_resolution_clock::now();
-            kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 100000, 0.01, h_oldCentroids, h_currentCentroids);
+            kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 1000000, 0.0001, h_oldCentroids, h_currentCentroids);
 
             CUDA_CHECK(cudaDeviceSynchronize()); // Assicuriamoci che i kernel siano completati
             auto finish = std::chrono::high_resolution_clock::now();
 
+
+            CUDA_CHECK(cudaMemcpy(h_centroids.data(), d_centroids, numCentroids * dimensions * sizeof(double), cudaMemcpyDeviceToHost));
+
             //std::cout << "Copia dei centroidi dalla GPU...\n";
+            /*
             if (d_centroids == nullptr) {
                 //std::cerr << "Errore: puntatore d_centroids è nullo.\n";
                 exit(-1);
             }
-            CUDA_CHECK(cudaMemcpy(h_centroids.data(), d_centroids, numCentroids * dimensions * sizeof(float), cudaMemcpyDeviceToHost));
+           
+            */
+            /*
+            CUDA_CHECK(cudaMemcpy(h_assignments.data(), d_assignments, numPoints * sizeof(int), cudaMemcpyDeviceToHost));
+
+            
+            // Controllo distribuzione dei punti nei cluster
+            std::vector<int> clusterCounts(numCentroids, 0);
+            for (int i = 0; i < numPoints; i++) {
+                clusterCounts[h_assignments[i]]++;
+            }
+
+            std::cout << "Distribuzione punti nei cluster:\n";
+            for (int i = 0; i < numCentroids; i++) {
+                std::cout << "Cluster " << i << ": " << clusterCounts[i] << " punti\n";
+            }
+                */
+
+
             //std::cout << "Copia completata con successo.\n";
 
             // Stampa dei dati copiati
@@ -267,8 +296,8 @@ int main(int argc, char* argv[]) {
             }
             */
 
+            /*
             
-
             std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
             for (int c = 0; c < numCentroids; c++) {
                 std::cout << "Centroide " << c << ": (";
@@ -278,7 +307,8 @@ int main(int argc, char* argv[]) {
                 }
                 std::cout << ")\n";
             }
-
+            */
+            
             
 
 

@@ -15,4 +15,4 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
     }
 }
 
-void kmeans_cuda(float* d_points, float* d_centroids, int* d_assignments, int numPoints, int numCentroids, int dimensions, int maxIterations, float tolerance, std::vector<float>& h_oldCentroids, std::vector<float>& h_currentCentroids);
+void kmeans_cuda(double* d_points, double* d_centroids, int* d_assignments, int numPoints, int numCentroids, int dimensions, int maxIterations, double tolerance, std::vector<double>& h_oldCentroids, std::vector<double>& h_currentCentroids);
