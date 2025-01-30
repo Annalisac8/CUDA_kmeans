@@ -1,3 +1,5 @@
+
+/*
 #pragma once
 
 #include <cuda_runtime.h>
@@ -16,3 +18,13 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 }
 
 void kmeans_cuda(double* d_points, double* d_centroids, int* d_assignments, int numPoints, int numCentroids, int dimensions, int maxIterations, double tolerance, std::vector<double>& h_oldCentroids, std::vector<double>& h_currentCentroids);
+
+*/
+
+#pragma once
+#include <cuda_runtime.h>
+#include <vector>
+
+void kmeans_cuda(double* d_points, double* d_centroids, int* d_assignments,
+    int numPoints, int numCentroids, int dimensions, int maxIters, double tol,
+    std::vector<double>& h_oldCentroids, std::vector<double>& h_currentCentroids);

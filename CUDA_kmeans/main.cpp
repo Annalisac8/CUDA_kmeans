@@ -46,7 +46,7 @@
 
 #include <stdio.h>
 
-
+/*
 // Funzione per ottenere la media dei tempi di esecuzione
 double calcolaTempoMedio(const std::vector<double>& tempi) {
     return std::accumulate(tempi.begin(), tempi.end(), 0.0) / tempi.size();
@@ -88,14 +88,15 @@ void stampaPunti(const std::vector<Punto>& ds) {
         std::cout << ") -> Cluster " << punto.cluster_id << "\n";
     }
 }
-
+*/
+/*
 int main(int argc, char* argv[]) {
 
     std::vector<std::string> filenames = { 
-        /*
-        "test.txt",
-        "ds.txt",
-        */
+        
+       //"test.txt",
+       //"ds.txt",
+        
         
         /*
         "s1set.txt",
@@ -111,19 +112,18 @@ int main(int argc, char* argv[]) {
         
         
         //"1000x10.txt",
-        "1000x100.txt",
+        //"1000x100.txt",
         
-        //"1000x1000.txt",
 
         
         //"10000x10.txt",
-        "10000x100.txt",
-
+        //"10000x100.txt",
         
-        //"10000x1000.txt",
+        
+
         //"100000x10.txt",
         //"100000x100.txt",
-        //"100000x1000.txt",
+/*
         
          };
     const int numEsecuzioni = 1;
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
 
         int numPoints = dataset.size();
         int dimensions = dataset[0].dimensioni.size();
-        int numCentroids = 10;
+        int numCentroids = 65;
 
         if (filename == "test.txt") { numCentroids = 3; }
         if (filename == "ds.txt") { numCentroids = 3; }
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
         std::vector<double> tempiSeq(numEsecuzioni);
         std::vector<double> tempiPar(numEsecuzioni);
 
-        const int numEsecuzioni = 1;
+       // const int numEsecuzioni = 1;
 
 
         for (int iter = 0; iter < numEsecuzioni; iter++) {
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
             stampaCentroidi(seqCentroids);
 
             */
-
+/*
             std::vector<double> h_points(numPoints * dimensions);
             std::vector<double> h_centroids(numCentroids * dimensions);
 
@@ -246,10 +246,11 @@ int main(int argc, char* argv[]) {
             std::vector<double> h_oldCentroids(numCentroids * dimensions);
             std::vector<double> h_currentCentroids(numCentroids * dimensions);
 
-            std::cout << "Inizio K-Means su GPU...\n";
-
+            //std::cout << "Inizio K-Means su GPU...\n";
+            std::cout << filename <<"\n";
             auto start = std::chrono::high_resolution_clock::now();
             kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 1000000, 0.0001, h_oldCentroids, h_currentCentroids);
+            
 
             CUDA_CHECK(cudaDeviceSynchronize()); // Assicuriamoci che i kernel siano completati
             auto finish = std::chrono::high_resolution_clock::now();
@@ -296,8 +297,8 @@ int main(int argc, char* argv[]) {
             }
             */
 
-            /*
             
+            /*
             std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
             for (int c = 0; c < numCentroids; c++) {
                 std::cout << "Centroide " << c << ": (";
@@ -310,7 +311,7 @@ int main(int argc, char* argv[]) {
             */
             
             
-
+/*
 
             //std::cout << "Rilascio della memoria GPU nel main...\n";
 
@@ -345,7 +346,7 @@ int main(int argc, char* argv[]) {
             std::chrono::duration<double> elapsedCuda = finish - start;
             tempiPar[iter] = std::chrono::duration<double>(finish - start).count();
 
-            std::cout << filename <<"Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";
+            //std::cout << filename <<"Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";
 
             /// Calcola la media dei tempi
             //double mediaSeq = std::accumulate(tempiSeq.begin(), tempiSeq.end(), 0.0) / numEsecuzioni;
@@ -367,5 +368,160 @@ int main(int argc, char* argv[]) {
     stampaTabella(risultati);
 
     std::cout << "Fine del programma, tutti i processi completati con successo.\n";
+    return 0;
+}
+*/
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <random>
+#include <chrono>
+#include <numeric>
+#include <cstdlib>
+#include "Punto.h"
+#include "kernel.cuh"
+
+#define CUDA_CHECK(call) \
+    do { \
+        cudaError_t err = call; \
+        if (err != cudaSuccess) { \
+            std::cerr << "CUDA error in " << __FILE__ << " at line " << __LINE__ << ": " \
+                      << cudaGetErrorString(err) << std::endl; \
+            exit(EXIT_FAILURE); \
+        } \
+    } while (0)
+
+double calcolaTempoMedio(const std::vector<double>& tempi) {
+    return std::accumulate(tempi.begin(), tempi.end(), 0.0) / tempi.size();
+}
+
+int main(int argc, char* argv[]) {
+    std::vector<std::string> filenames = { 
+       //"test.txt",
+       //"ds.txt",
+        
+        "1000x100.txt", 
+        "10000x100.txt" 
+        };
+    int numEsecuzioni = 1;
+    std::vector<std::tuple<std::string, double>> risultati;
+
+    for (const auto& filename : filenames) {
+        std::ifstream dataset_file("ds/" + filename);
+        if (!dataset_file) {
+            std::cerr << "Impossibile aprire il file: " << filename << std::endl;
+            continue;
+        }
+
+        std::vector<Punto> dataset;
+        std::string riga;
+        double valore;
+        while (std::getline(dataset_file, riga)) {
+            std::istringstream iss(riga);
+            Punto punto;
+            while (iss >> valore) {
+                punto.dimensioni.push_back(valore);
+            }
+            dataset.push_back(punto);
+        }
+        dataset_file.close();
+
+        int numPoints = dataset.size();
+        int dimensions = dataset[0].dimensioni.size();
+        int numCentroids = 1000;
+        if (filename == "test.txt") { numCentroids = 3; }
+        if (filename == "ds.txt") { numCentroids = 3; }
+        if (filename == "s1set.txt") { numCentroids = 15; }
+        if (filename == "a1.txt") { numCentroids = 20; }
+        if (filename == "a2.txt") { numCentroids = 35; }
+        if (filename == "a3.txt") { numCentroids = 50; }
+        if (filename == "letter.txt") { numCentroids = 26; }
+        if (filename == "birch1.txt") { numCentroids = 100; }
+        if (filename == "birch3.txt") { numCentroids = 100; }
+
+        std::vector<Punto> initialCentroids(numCentroids);
+        std::vector<int> indices(numPoints);
+        std::iota(indices.begin(), indices.end(), 0);
+        std::shuffle(indices.begin(), indices.end(), std::mt19937(std::random_device()()));
+        for (int i = 0; i < numCentroids; i++) {
+            initialCentroids[i] = dataset[indices[i]];
+        }
+        if (filename == "ds.txt") {
+            initialCentroids[0] = Punto(1.0, 2.0, 3.0);
+            initialCentroids[1] = Punto(5.0, 6.0, 7.0);
+            initialCentroids[2] = Punto(9.0, 9.5, 9.0);
+        }
+
+        std::vector<double> h_points(numPoints * dimensions);
+        std::vector<double> h_centroids(numCentroids * dimensions);
+        for (int i = 0; i < numPoints; i++) {
+            for (int d = 0; d < dimensions; d++) {
+                h_points[i * dimensions + d] = dataset[i].dimensioni[d];
+            }
+        }
+        for (int c = 0; c < numCentroids; c++) {
+            for (int d = 0; d < dimensions; d++) {
+                h_centroids[c * dimensions + d] = initialCentroids[c].dimensioni[d];
+            }
+        }
+
+        double* d_points;
+        double* d_centroids;
+        int* d_assignments;
+        CUDA_CHECK(cudaMalloc(&d_points, numPoints * dimensions * sizeof(double)));
+        CUDA_CHECK(cudaMalloc(&d_centroids, numCentroids * dimensions * sizeof(double)));
+        CUDA_CHECK(cudaMalloc(&d_assignments, numPoints * sizeof(int)));
+
+        CUDA_CHECK(cudaMemcpy(d_points, h_points.data(), numPoints * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), numCentroids * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+
+        std::vector<double> h_oldCentroids(numCentroids * dimensions);
+        std::vector<double> h_currentCentroids(numCentroids * dimensions);
+
+        std::vector<int> h_assignments(numPoints);
+        auto start = std::chrono::high_resolution_clock::now();
+        kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 100, 0.0001, h_oldCentroids, h_currentCentroids);
+        CUDA_CHECK(cudaDeviceSynchronize());
+        auto finish = std::chrono::high_resolution_clock::now();
+        CUDA_CHECK(cudaMemcpy(h_centroids.data(), d_centroids, numCentroids * dimensions * sizeof(double), cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpy(h_assignments.data(), d_assignments, numPoints * sizeof(int), cudaMemcpyDeviceToHost));
+
+        std::vector<int> clusterCounts(numCentroids, 0);
+        for (int i = 0; i < numPoints; i++) {
+            clusterCounts[h_assignments[i]]++;
+        }
+        /*
+        std::cout << "\n--- Distribuzione punti nei cluster ---\n";
+        for (int c = 0; c < numCentroids; c++) {
+            std::cout << "Cluster " << c << ": " << clusterCounts[c] << " punti\n";
+        }
+        
+          std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
+          for (int c = 0; c < numCentroids; c++) {
+              std::cout << "Centroide " << c << ": (";
+              for (int d = 0; d < dimensions; d++) {
+                  std::cout << h_centroids[c * dimensions + d];
+                  if (d < dimensions - 1) std::cout << ", ";
+              }
+              std::cout << ")\n";
+          }
+          */
+          
+
+        std::chrono::duration<double> elapsedCuda = finish - start;
+        risultati.emplace_back(filename, elapsedCuda.count());
+
+        CUDA_CHECK(cudaFree(d_points));
+        CUDA_CHECK(cudaFree(d_centroids));
+        CUDA_CHECK(cudaFree(d_assignments));
+    }
+
+    for (const auto& risultato : risultati) {
+        std::cout << "File: " << std::get<0>(risultato) << " | Tempo CUDA: " << std::get<1>(risultato) << " s" << std::endl;
+    }
     return 0;
 }
