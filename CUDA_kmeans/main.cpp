@@ -51,6 +51,7 @@
 double calcolaTempoMedio(const std::vector<double>& tempi) {
     return std::accumulate(tempi.begin(), tempi.end(), 0.0) / tempi.size();
 }
+*/
 void stampaCentroidi(const std::vector<Punto>& centroidi) {
     std::cout << "Centroidi:\n";
     for (size_t i = 0; i < centroidi.size(); ++i) {
@@ -65,18 +66,18 @@ void stampaCentroidi(const std::vector<Punto>& centroidi) {
 
 void stampaTabella(const std::vector<std::tuple<std::string, double, double>>& risultati) {
     std::cout << std::setw(20) << "File"
-        //<< std::setw(20) << "Tempo Seq (s)"
+        << std::setw(20) << "Tempo Seq (s)"
         << std::setw(20) << "Tempo Parallelo (s)" << std::endl;
     std::cout << std::string(60, '-') << std::endl;
 
     for (const auto& risultato : risultati) {
         std::cout << std::setw(20) << std::get<0>(risultato) // Nome del file
-            // << std::setw(20) << std::fixed << std::setprecision(6) << std::get<1>(risultato) // Tempo sequenziale
+            << std::setw(20) << std::fixed << std::setprecision(6) << std::get<1>(risultato) // Tempo sequenziale
             << std::setw(20) << std::fixed << std::setprecision(6) << std::get<2>(risultato) // Tempo parallelo
             << std::endl;
     }
 }
-
+/*
 void stampaPunti(const std::vector<Punto>& ds) {
     std::cout << "Punti e cluster assegnati:\n";
     for (const auto& punto : ds) {
@@ -399,16 +400,38 @@ double calcolaTempoMedio(const std::vector<double>& tempi) {
     return std::accumulate(tempi.begin(), tempi.end(), 0.0) / tempi.size();
 }
 
+
 int main(int argc, char* argv[]) {
     std::vector<std::string> filenames = { 
        //"test.txt",
        //"ds.txt",
         
-        "1000x100.txt", 
-        "10000x100.txt" 
+        
+        //"s1set.txt",  
+        /*
+        "a1.txt",
+        "a2.txt",
+        "a3.txt",
+        */
+        /*
+        "letter.txt",
+        "birch1.txt",
+        */
+        
+        /*
+        "1000x10.txt",
+        "1000x100.txt",
+        "10000x10.txt",
+        "10000x100.txt",
+        
+        "100000x10.txt",
+        "100000x100.txt"
+        */
+        
         };
     int numEsecuzioni = 1;
-    std::vector<std::tuple<std::string, double>> risultati;
+    //std::vector<std::tuple<std::string, double>> risultati;
+    std::vector<std::tuple<std::string, double, double>> risultati;
 
     for (const auto& filename : filenames) {
         std::ifstream dataset_file("ds/" + filename);
@@ -432,7 +455,7 @@ int main(int argc, char* argv[]) {
 
         int numPoints = dataset.size();
         int dimensions = dataset[0].dimensioni.size();
-        int numCentroids = 1000;
+        int numCentroids = 10;
         if (filename == "test.txt") { numCentroids = 3; }
         if (filename == "ds.txt") { numCentroids = 3; }
         if (filename == "s1set.txt") { numCentroids = 15; }
@@ -445,83 +468,141 @@ int main(int argc, char* argv[]) {
 
         std::vector<Punto> initialCentroids(numCentroids);
         std::vector<int> indices(numPoints);
-        std::iota(indices.begin(), indices.end(), 0);
-        std::shuffle(indices.begin(), indices.end(), std::mt19937(std::random_device()()));
-        for (int i = 0; i < numCentroids; i++) {
-            initialCentroids[i] = dataset[indices[i]];
-        }
-        if (filename == "ds.txt") {
-            initialCentroids[0] = Punto(1.0, 2.0, 3.0);
-            initialCentroids[1] = Punto(5.0, 6.0, 7.0);
-            initialCentroids[2] = Punto(9.0, 9.5, 9.0);
-        }
 
-        std::vector<double> h_points(numPoints * dimensions);
-        std::vector<double> h_centroids(numCentroids * dimensions);
-        for (int i = 0; i < numPoints; i++) {
-            for (int d = 0; d < dimensions; d++) {
-                h_points[i * dimensions + d] = dataset[i].dimensioni[d];
+
+        std::vector<double> tempiSeq(numEsecuzioni);
+        std::vector<double> tempiPar(numEsecuzioni);
+
+
+
+        for(int iter = 0; iter < numEsecuzioni; iter++) {
+
+           
+            //inizializzazione centroidi
+
+            std::iota(indices.begin(), indices.end(), 0);
+            std::shuffle(indices.begin(), indices.end(), std::mt19937(std::random_device()()));
+            for (int i = 0; i < numCentroids; i++) {
+                initialCentroids[i] = dataset[indices[i]];
             }
-        }
-        for (int c = 0; c < numCentroids; c++) {
-            for (int d = 0; d < dimensions; d++) {
-                h_centroids[c * dimensions + d] = initialCentroids[c].dimensioni[d];
+            if (filename == "ds.txt") {
+                initialCentroids[0] = Punto(1.5, 1.8);
+                initialCentroids[1] = Punto(8.0, 8.0);
+                initialCentroids[2] = Punto(10.0, 2.0);
+
             }
-        }
+            
+            std::cout << "Inizializzazione centroidi:\n";
+            //stampaCentroidi(initialCentroids);
 
-        double* d_points;
-        double* d_centroids;
-        int* d_assignments;
-        CUDA_CHECK(cudaMalloc(&d_points, numPoints * dimensions * sizeof(double)));
-        CUDA_CHECK(cudaMalloc(&d_centroids, numCentroids * dimensions * sizeof(double)));
-        CUDA_CHECK(cudaMalloc(&d_assignments, numPoints * sizeof(int)));
+            // **Esecuzione SEQUENZIALE**
+            
+            /*
+            std::cout << "Inizio K-Means sequenziale...\n";
+            auto startSeq = std::chrono::high_resolution_clock::now();
+            auto [seqDataset, seqCentroids] = sequential_kmeans(dataset, initialCentroids, numCentroids, 1000, 0.001);
+            auto finishSeq = std::chrono::high_resolution_clock::now();
 
-        CUDA_CHECK(cudaMemcpy(d_points, h_points.data(), numPoints * dimensions * sizeof(double), cudaMemcpyHostToDevice));
-        CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), numCentroids * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+            std::chrono::duration<double> elapsedSeq = finishSeq - startSeq;
+            std::cout << "Tempo sequenziale: " << elapsedSeq.count() << " secondi.\n";
+            tempiSeq[iter] = std::chrono::duration<double>(finishSeq - startSeq).count();
+            std::cout << "Centroidi sequenziale:";
+            //stampaCentroidi(seqCentroids);
 
-        std::vector<double> h_oldCentroids(numCentroids * dimensions);
-        std::vector<double> h_currentCentroids(numCentroids * dimensions);
+            */
 
-        std::vector<int> h_assignments(numPoints);
-        auto start = std::chrono::high_resolution_clock::now();
-        kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 100, 0.0001, h_oldCentroids, h_currentCentroids);
-        CUDA_CHECK(cudaDeviceSynchronize());
-        auto finish = std::chrono::high_resolution_clock::now();
-        CUDA_CHECK(cudaMemcpy(h_centroids.data(), d_centroids, numCentroids * dimensions * sizeof(double), cudaMemcpyDeviceToHost));
-        CUDA_CHECK(cudaMemcpy(h_assignments.data(), d_assignments, numPoints * sizeof(int), cudaMemcpyDeviceToHost));
+            //****CUDA******
 
-        std::vector<int> clusterCounts(numCentroids, 0);
-        for (int i = 0; i < numPoints; i++) {
-            clusterCounts[h_assignments[i]]++;
-        }
-        /*
-        std::cout << "\n--- Distribuzione punti nei cluster ---\n";
-        for (int c = 0; c < numCentroids; c++) {
-            std::cout << "Cluster " << c << ": " << clusterCounts[c] << " punti\n";
-        }
-        
-          std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
-          for (int c = 0; c < numCentroids; c++) {
-              std::cout << "Centroide " << c << ": (";
-              for (int d = 0; d < dimensions; d++) {
-                  std::cout << h_centroids[c * dimensions + d];
-                  if (d < dimensions - 1) std::cout << ", ";
+            
+            std::vector<double> h_points(numPoints * dimensions);
+            std::vector<double> h_centroids(numCentroids * dimensions);
+            for (int i = 0; i < numPoints; i++) {
+                for (int d = 0; d < dimensions; d++) {
+                    h_points[i * dimensions + d] = dataset[i].dimensioni[d];
+                }
+            }
+            for (int c = 0; c < numCentroids; c++) {
+                for (int d = 0; d < dimensions; d++) {
+                    h_centroids[c * dimensions + d] = initialCentroids[c].dimensioni[d];
+                }
+            }
+
+            double* d_points;
+            double* d_centroids;
+            int* d_assignments;
+            CUDA_CHECK(cudaMalloc(&d_points, numPoints * dimensions * sizeof(double)));
+            CUDA_CHECK(cudaMalloc(&d_centroids, numCentroids * dimensions * sizeof(double)));
+            CUDA_CHECK(cudaMalloc(&d_assignments, numPoints * sizeof(int)));
+
+            CUDA_CHECK(cudaMemcpy(d_points, h_points.data(), numPoints * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+            CUDA_CHECK(cudaMemcpy(d_centroids, h_centroids.data(), numCentroids * dimensions * sizeof(double), cudaMemcpyHostToDevice));
+
+            std::vector<double> h_oldCentroids(numCentroids * dimensions);
+            std::vector<double> h_currentCentroids(numCentroids * dimensions);
+
+            std::vector<int> h_assignments(numPoints);
+            std::cout << "Esecuzione kmeans CUDA:\n";
+            auto start = std::chrono::high_resolution_clock::now();
+            kmeans_cuda(d_points, d_centroids, d_assignments, numPoints, numCentroids, dimensions, 1000, 0.0001, h_oldCentroids, h_currentCentroids);
+            CUDA_CHECK(cudaDeviceSynchronize());
+            auto finish = std::chrono::high_resolution_clock::now();
+            
+            CUDA_CHECK(cudaMemcpy(h_centroids.data(), d_centroids, numCentroids * dimensions * sizeof(double), cudaMemcpyDeviceToHost));
+            CUDA_CHECK(cudaMemcpy(h_assignments.data(), d_assignments, numPoints * sizeof(int), cudaMemcpyDeviceToHost));
+
+            /*
+            std::vector<int> clusterCounts(numCentroids, 0);
+            for (int i = 0; i < numPoints; i++) {
+                clusterCounts[h_assignments[i]]++;
+            }
+
+            
+            std::cout << "\n--- Distribuzione punti nei cluster ---\n";
+            for (int c = 0; c < numCentroids; c++) {
+                std::cout << "Cluster " << c << ": " << clusterCounts[c] << " punti\n";
+            }
+            */
+            
+            /*
+              std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
+              for (int c = 0; c < numCentroids; c++) {
+                  std::cout << "Centroide " << c << ": (";
+                  for (int d = 0; d < dimensions; d++) {
+                      std::cout << h_centroids[c * dimensions + d];
+                      if (d < dimensions - 1) std::cout << ", ";
+                  }
+                  std::cout << ")\n";
               }
-              std::cout << ")\n";
-          }
-          */
-          
+              
+              */
 
-        std::chrono::duration<double> elapsedCuda = finish - start;
-        risultati.emplace_back(filename, elapsedCuda.count());
 
-        CUDA_CHECK(cudaFree(d_points));
-        CUDA_CHECK(cudaFree(d_centroids));
-        CUDA_CHECK(cudaFree(d_assignments));
+            std::chrono::duration<double> elapsedCuda = finish - start;
+            std::cout << "Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";
+            //risultati.emplace_back(filename, elapsedCuda.count());
+
+            tempiPar[iter] = std::chrono::duration<double>(finish - start).count();
+
+            CUDA_CHECK(cudaFree(d_points));
+            CUDA_CHECK(cudaFree(d_centroids));
+            CUDA_CHECK(cudaFree(d_assignments));
+
+           
+
+        }
+        /// Calcola la media dei tempi
+        double mediaSeq = std::accumulate(tempiSeq.begin(), tempiSeq.end(), 0.0) / numEsecuzioni;
+        double mediaPar = std::accumulate(tempiPar.begin(), tempiPar.end(), 0.0) / numEsecuzioni;
+
+        // Aggiungi risultati al vettore
+        risultati.push_back(std::make_tuple(filename, mediaSeq, mediaPar));
     }
-
+    /*
     for (const auto& risultato : risultati) {
         std::cout << "File: " << std::get<0>(risultato) << " | Tempo CUDA: " << std::get<1>(risultato) << " s" << std::endl;
     }
+    */
+    stampaTabella(risultati);
     return 0;
 }
+

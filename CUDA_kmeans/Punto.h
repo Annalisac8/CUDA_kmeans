@@ -37,6 +37,25 @@ struct Punto {
         dimensioni.push_back(y);
         dimensioni.push_back(z);
     }
+    Punto(double x, double y) {
+        dimensioni.push_back(x);
+        dimensioni.push_back(y);
+
+    }
+
+    // Costruttore di copia
+    Punto(const Punto& other) {
+        dimensioni = other.dimensioni;  // Copia esplicita dei dati
+    }
+
+    // Operatore di assegnazione
+    Punto& operator=(const Punto& other) {
+        if (this != &other) { // Evita auto-assegnazione
+            dimensioni = other.dimensioni;
+        }
+        return *this;
+    }
+
 };
 
 

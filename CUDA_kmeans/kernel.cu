@@ -308,7 +308,12 @@ void kmeans_cuda(double* d_points, double* d_centroids, int* d_assignments,
     int gridSizePoints = (numPoints + blockSize - 1) / blockSize;
     int gridSizeCentroids = (numCentroids + blockSize - 1) / blockSize;
 
-    for (int iter = 0; iter < maxIters; ++iter) {
+
+    bool convergenza=false;
+
+    //for (int iter = 0; iter < maxIters; ++iter) {
+    int iter = 0;
+    while(!convergenza){
         CUDA_CHECK(cudaMemset(d_clusterSizes, 0, numCentroids * sizeof(int)));
         CUDA_CHECK(cudaMemset(d_newCentroids, 0, numCentroids * dimensions * sizeof(double)));
 
@@ -323,22 +328,62 @@ void kmeans_cuda(double* d_points, double* d_centroids, int* d_assignments,
 
         CUDA_CHECK(cudaMemcpy(h_currentCentroids.data(), d_centroids, numCentroids * dimensions * sizeof(double), cudaMemcpyDeviceToHost));
 
-        double maxShift = 0.0;
+        /*
+        std::cout << "\n--- [DEBUG] Centroidi aggiornati cuda ***\n";
+        for (int c = 0; c < numCentroids; c++) {
+            std::cout << "Centroide " << c << ": (";
+            for (int d = 0; d < dimensions; d++) {
+                std::cout << h_currentCentroids[c * dimensions + d];
+                if (d < dimensions - 1) std::cout << ", ";
+            }
+            std::cout << ")\n";
+
+        }
+        */
+/*
+        bool converged = true;
+        for (int c = 0; c < numCentroids; ++c) {
+            for (int d = 0; d < dimensions; ++d) {
+                if (h_currentCentroids[c * dimensions + d] != h_oldCentroids[c * dimensions + d]) {
+                    converged = false;
+                    break;
+                }
+            }
+            if (!converged) break;
+        }
+
+        if (converged) {
+            printf("Convergenza raggiunta dopo %d iterazioni\n", iter + 1);
+            break;
+        }
+  */      
+
         for (int c = 0; c < numCentroids; ++c) {
             double shift = 0.0;
+            convergenza = false;
+
             for (int d = 0; d < dimensions; ++d) {
                 double diff = h_currentCentroids[c * dimensions + d] - h_oldCentroids[c * dimensions + d];
                 shift += diff * diff;
             }
-            maxShift = fmax(maxShift, sqrt(shift));
+            //maxShift = fmax(maxShift, sqrt(shift));
+
+            if ((std::sqrt(shift) / dimensions) > tol) {
+                //printf("Non convergente\n");
+                break;
+            }
+            else {
+                convergenza = true;
+            }
         }
 
-        if (maxShift < tol) {
-            printf("Convergenza raggiunta dopo %d iterazioni", iter + 1);
-                break;
-        }
+        iter++;
         h_oldCentroids = h_currentCentroids;
+
     }
+
+    // Stampa il numero totale di iterazioni eseguite
+    std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
 
     CUDA_CHECK(cudaFree(d_clusterSizes));
     CUDA_CHECK(cudaFree(d_newCentroids));
