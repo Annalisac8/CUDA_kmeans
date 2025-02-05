@@ -49,5 +49,23 @@
     <Text Include="ds\ds.txt">
       <Filter>ds</Filter>
     </Text>
+    <Text Include="ds\a2.txt">
+      <Filter>ds</Filter>
+    </Text>
+    <Text Include="ds\a3.txt">
+      <Filter>ds</Filter>
+    </Text>
+    <Text Include="ds\letter.txt">
+      <Filter>ds</Filter>
+    </Text>
+    <Text Include="ds\s1set.txt">
+      <Filter>ds</Filter>
+    </Text>
+    <Text Include="ds\birch1.txt">
+      <Filter>ds</Filter>
+    </Text>
+    <Text Include="ds\test.txt">
+      <Filter>ds</Filter>
+    </Text>
   </ItemGroup>
 </Project>

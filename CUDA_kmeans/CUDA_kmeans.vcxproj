@@ -109,10 +109,10 @@
     <Text Include="ds\a2.txt" />
     <Text Include="ds\a3.txt" />
     <Text Include="ds\birch1.txt" />
-    <Text Include="ds\birch3.txt" />
     <Text Include="ds\ds.txt" />
     <Text Include="ds\letter.txt" />
     <Text Include="ds\s1set.txt" />
+    <Text Include="ds\test.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
