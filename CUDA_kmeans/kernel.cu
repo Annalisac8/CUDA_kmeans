@@ -139,7 +139,7 @@ void kmeans_cuda(double* d_punti, double* d_centroidi, int* d_assegnamenti,
     }
 
     // Stampa il numero totale di iterazioni eseguite
-    std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
+    //std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
 
     CUDA_CHECK(cudaFree(d_grandezzeCluster));
     CUDA_CHECK(cudaFree(d_nuoviCentroidi));

@@ -198,7 +198,7 @@ std::tuple<std::vector<Punto>, std::vector<Punto>> sequential_kmeans(std::vector
     }
 
     // Stampa il numero totale di iterazioni eseguite
-    std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
+    //std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
 
     // Ritorna una tupla contenente il dataset aggiornato e i centroidi finali
     return { ds, centroidi };

@@ -60,30 +60,32 @@ void stampaTabella(const std::vector<std::tuple<std::string, double, double>>& r
 int main(int argc, char* argv[]) {
 
     std::vector<std::string> nomi_file= { 
-       "test.txt",
+       //"test.txt",
        "ds.txt",
         
-        
-        "s1set.txt",  
         /*
+        "s1set.txt",  
+        
         "a1.txt",
         "a2.txt",
         "a3.txt",
-        */
-        /*
+        
+        
         "letter.txt",
-        "birch1.txt",
         */
+        //"birch1.txt",
+        
         
         /*
         "1000x10.txt",
         "1000x100.txt",
         "10000x10.txt",
         "10000x100.txt",
-        
-        "100000x10.txt",
-        "100000x100.txt"
         */
+        
+        //"100000x10.txt",
+        //"100000x100.txt"
+        
         
         };
     int numEsecuzioni = 1;
@@ -208,7 +210,7 @@ int main(int argc, char* argv[]) {
 
             std::cout << "Esecuzione kmeans CUDA:\n";
             auto startPar = std::chrono::high_resolution_clock::now();
-            kmeans_cuda(d_punti, d_centroidi, d_assegnamenti, numPunti, numCentroidi, dim, 100, 0.0001, h_centroidiPrecedenti, h_centroidiCorrenti);
+            kmeans_cuda(d_punti, d_centroidi, d_assegnamenti, numPunti, numCentroidi, dim, 1000, 0.001, h_centroidiPrecedenti, h_centroidiCorrenti);
             CUDA_CHECK(cudaDeviceSynchronize());
             auto finishPar = std::chrono::high_resolution_clock::now();
             
