@@ -61,9 +61,9 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> nomi_file= { 
        //"test.txt",
-       "ds.txt",
+       //"ds.txt",
         
-        /*
+        
         "s1set.txt",  
         
         "a1.txt",
@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
         "a3.txt",
         
         
-        "letter.txt",
-        */
+        //"letter.txt",
+        
         //"birch1.txt",
         
         
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
         
         
         };
-    int numEsecuzioni = 1;
+    int numEsecuzioni = 5;
 
     std::vector<std::tuple<std::string, double, double>> risultati;
 
@@ -171,14 +171,14 @@ int main(int argc, char* argv[]) {
             std::cout << "Tempo sequenziale: " << enlapsedSeq.count() << " secondi.\n";
             tempiSeq[iter] = std::chrono::duration<double>(finishSeq - startSeq).count();
 
-            std::cout << "Centroidi sequenziale:";
-            stampaCentroidi(seqCentroidi);
+            //std::cout << "Centroidi sequenziale:";
+            //stampaCentroidi(seqCentroidi);
 
             
 
             //*************************************************CUDA******************************************************
 
-            
+            //Trasformo punti in dataset monodimensionale (vettori host)
             std::vector<double> h_punti(numPunti * dim);
             
             for (int i = 0; i < numPunti; i++) {
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
                     h_punti[i * dim + d] = dataset[i].dimensioni[d];
                 }
             }
-
+            //stesso procedimento per i centroidi
             std::vector<double> h_centroidi(numCentroidi* dim);
             for (int c = 0; c < numCentroidi; c++) {
                 for (int d = 0; d < dim; d++) {
@@ -194,13 +194,15 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            double* d_punti;
-            double* d_centroidi;
-            int* d_assegnamenti;
+            //allocazione della memoria su gpu
+            double* d_punti; //array dei punti del dataset
+            double* d_centroidi; //array dei centroidi
+            int* d_assegnamenti; //array per memorizzare gli assegnamenti dei punti
             CUDA_CHECK(cudaMalloc(&d_punti, numPunti * dim * sizeof(double)));
             CUDA_CHECK(cudaMalloc(&d_centroidi, numCentroidi * dim * sizeof(double)));
             CUDA_CHECK(cudaMalloc(&d_assegnamenti, numPunti * sizeof(int)));
 
+            //copia dei dati dalla cpu (host) alla gpu (device)
             CUDA_CHECK(cudaMemcpy(d_punti, h_punti.data(), numPunti * dim * sizeof(double), cudaMemcpyHostToDevice));
             CUDA_CHECK(cudaMemcpy(d_centroidi, h_centroidi.data(), numCentroidi * dim * sizeof(double), cudaMemcpyHostToDevice));
 
@@ -208,16 +210,18 @@ int main(int argc, char* argv[]) {
             std::vector<double> h_centroidiCorrenti(numCentroidi * dim);
             std::vector<int> h_assegnamenti(numPunti);
 
+            //esecuzione kmeans cuda
             std::cout << "Esecuzione kmeans CUDA:\n";
             auto startPar = std::chrono::high_resolution_clock::now();
             kmeans_cuda(d_punti, d_centroidi, d_assegnamenti, numPunti, numCentroidi, dim, 1000, 0.001, h_centroidiPrecedenti, h_centroidiCorrenti);
             CUDA_CHECK(cudaDeviceSynchronize());
             auto finishPar = std::chrono::high_resolution_clock::now();
             
+            //recupero dei risultati dalla gpu (copia dei risultati dalla gpu alla cpu)
             CUDA_CHECK(cudaMemcpy(h_centroidi.data(), d_centroidi, numCentroidi * dim * sizeof(double), cudaMemcpyDeviceToHost));
             CUDA_CHECK(cudaMemcpy(h_assegnamenti.data(), d_assegnamenti, numPunti * sizeof(int), cudaMemcpyDeviceToHost));
 
-
+            //deallocazione della memoria gpu
             CUDA_CHECK(cudaFree(d_punti));
             CUDA_CHECK(cudaFree(d_centroidi));
             CUDA_CHECK(cudaFree(d_assegnamenti));
@@ -235,7 +239,7 @@ int main(int argc, char* argv[]) {
             }
             */
             
-            
+           /*
               std::cout << "\n--- Centroidi calcolati con CUDA ---\n";
               for (int c = 0; c < numCentroidi; c++) {
                   std::cout << "Centroide " << c << ": (";
@@ -245,7 +249,7 @@ int main(int argc, char* argv[]) {
                   }
                   std::cout << ")\n";
               }
-              
+            */  
 
             std::chrono::duration<double> elapsedCuda = finishPar - startPar;
             std::cout << "Tempo CUDA: " << elapsedCuda.count() << " secondi.\n";

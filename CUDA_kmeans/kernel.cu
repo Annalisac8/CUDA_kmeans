@@ -20,15 +20,18 @@
         } \
     } while (0)
 
+//kernel assegnazione dei punti ai cluster
 __global__ void assegnaClusters(const double* punti, const double* centroidi, int* assegnamenti,
     int numPunti, int numCentroidi, int dimensioni) {
-
+    
+    //id del thread
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numPunti) return;
 
     double minDist = INFINITY;
     int migliorCluster = -1;
 
+    //ogni thread calcola l'assegnamento per un punto 
     for (int c = 0; c < numCentroidi; ++c) {
         double dist = 0.0;
         for (int d = 0; d < dimensioni; ++d) {
@@ -41,15 +44,19 @@ __global__ void assegnaClusters(const double* punti, const double* centroidi, in
             migliorCluster = c;
         }
     }
+    //assegno il punto al miglior cluster
     assegnamenti[idx] = migliorCluster;
    // printf("Punto %d assegnato al cluster %d con distanza %.4f", idx, bestCluster, minDist);
 }
-
+// kernel aggiornamento centroidi
 __global__ void aggiornaCentroidi(const double* punti, double* nuoviCentroidi, int* assegnamenti,
     int numPunti, int numCentroidi, int dimensioni, int* grandezzeCluster) {
+    //id del thread
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numPunti) return;
 
+    //ogni thread aggiorna la somma delle coordinate per il proprio cluster (lavora su un punto aggiungendo i suoi valori al centroide)
+    //uso atomicAdd per evitare race condition (più thread scrivono sulla stessa variabile)
     int cluster = assegnamenti[idx];
     if (cluster == -1) return;
 
@@ -59,10 +66,13 @@ __global__ void aggiornaCentroidi(const double* punti, double* nuoviCentroidi, i
     atomicAdd(&grandezzeCluster[cluster], 1);
 }
 
+//kernel normalizza centroidi
 __global__ void normalizzaCentroidi(double* centroidi, double* nuoviCentroidi, int* grandezzeCluster, int numCentroidi, int dimensioni) {
+    //id del thread
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= numCentroidi) return;
 
+    //ogni thread lavora su un centroide e calcola la media, evito anche la divisione per zero controllando n
     int n = grandezzeCluster[idx];
     if (n > 0) {
         for (int d = 0; d < dimensioni; ++d) {
@@ -75,12 +85,14 @@ void kmeans_cuda(double* d_punti, double* d_centroidi, int* d_assegnamenti,
     int numPunti, int numCentroidi, int dimensioni, int maxIter, double tol,
     std::vector<double>& h_centroidiPrecedenti, std::vector<double>& h_centroidiCorrenti) {
 
+    //allocazione della memoria sulla gpu per somme coordinate nuovi centroidi e numero di punti per centroide
     int* d_grandezzeCluster;
     double* d_nuoviCentroidi;
     CUDA_CHECK(cudaMalloc(&d_grandezzeCluster, numCentroidi * sizeof(int)));
     CUDA_CHECK(cudaMalloc(&d_nuoviCentroidi, numCentroidi * dimensioni * sizeof(double)));
 
-    int blockSize = 256;
+    //definisco il numero di blocchi e thread
+    int blockSize = 256; //256 valore ottimale 
     int gridSizePunti = (numPunti + blockSize - 1) / blockSize;
     int gridSizeCentroidi = (numCentroidi + blockSize - 1) / blockSize;
 
@@ -88,24 +100,29 @@ void kmeans_cuda(double* d_punti, double* d_centroidi, int* d_assegnamenti,
     bool convergenza=false;
     int iter = 0;
 
+    //ciclo iterativo del kmeans
     while(!convergenza){
 
         if (iter >= maxIter) {
             break;
         }
-
+        //reset delle strutture di supporto
         CUDA_CHECK(cudaMemset(d_grandezzeCluster, 0, numCentroidi * sizeof(int)));
         CUDA_CHECK(cudaMemset(d_nuoviCentroidi, 0, numCentroidi * dimensioni * sizeof(double)));
 
+        //assegna i punti ai cluster
         assegnaClusters << <gridSizePunti, blockSize >> > (d_punti, d_centroidi, d_assegnamenti, numPunti, numCentroidi, dimensioni);
         CUDA_CHECK(cudaDeviceSynchronize());
 
+        //aggiorna i centroidi sommando le coordinate
         aggiornaCentroidi << <gridSizePunti, blockSize >> > (d_punti, d_nuoviCentroidi, d_assegnamenti, numPunti, numCentroidi, dimensioni, d_grandezzeCluster);
         CUDA_CHECK(cudaDeviceSynchronize());
 
+        //normalizza i centroidi calcolando la media
         normalizzaCentroidi << <gridSizeCentroidi, blockSize >> > (d_centroidi, d_nuoviCentroidi, d_grandezzeCluster, numCentroidi, dimensioni);
         CUDA_CHECK(cudaDeviceSynchronize());
 
+        //copio i nuovi centroidi sulla cpu per controllare la convergenza
         CUDA_CHECK(cudaMemcpy(h_centroidiCorrenti.data(), d_centroidi, numCentroidi * dimensioni * sizeof(double), cudaMemcpyDeviceToHost));
  
 
@@ -134,13 +151,12 @@ void kmeans_cuda(double* d_punti, double* d_centroidi, int* d_assegnamenti,
         // Aggiorno i vecchi centroidi per confronto successivo
         h_centroidiPrecedenti = h_centroidiCorrenti;
 
-
-
     }
 
     // Stampa il numero totale di iterazioni eseguite
     //std::cout << "Numero di iterazioni per convergenza: " << iter << " \n";
 
+    //libero memoria allocata per evitare memory leak
     CUDA_CHECK(cudaFree(d_grandezzeCluster));
     CUDA_CHECK(cudaFree(d_nuoviCentroidi));
 }
